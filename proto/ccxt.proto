@@ -1,0 +1,185 @@
+syntax = "proto3";
+
+package ccxtmicro;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "ccxtmicropb";
+
+message Credentials {
+  string api_key = 1;
+  string secret = 2;
+  string password = 3;
+  string uid = 4;
+  string login = 5;
+  string token = 6;
+  string twofa = 7;
+}
+
+message ExchangeConfig {
+  string exchange = 1; // e.g., "binance", "kraken"
+  bool enable_rate_limit = 2;
+  string default_type = 3; // e.g., "spot","future"
+  string subaccount = 4; // for some exchanges
+}
+
+message Params {
+  google.protobuf.Struct value = 1;
+}
+
+message BaseRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  Params params = 3; // optional
+}
+
+message Void {}
+
+message GenericResponse {
+  google.protobuf.Value data = 1;
+}
+
+message LoadMarketsRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  bool reload = 3;
+  Params params = 4;
+}
+
+message SymbolRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  string symbol = 3;
+  Params params = 4;
+}
+
+message SymbolsRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  repeated string symbols = 3;
+  Params params = 4;
+}
+
+message OrderBookRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  string symbol = 3;
+  int32 limit = 4;
+  Params params = 5;
+}
+
+message OHLCVRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  string symbol = 3;
+  string timeframe = 4; // e.g., "1m","5m","1h","1d"
+  int64 since = 5;      // ms since epoch
+  int32 limit = 6;
+  Params params = 7;
+}
+
+message OHLCVEntry {
+  int64 timestamp = 1;
+  double open = 2;
+  double high = 3;
+  double low = 4;
+  double close = 5;
+  double volume = 6;
+}
+
+message FetchOHLCVResponse {
+  repeated OHLCVEntry candles = 1;
+}
+
+message TradesRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  string symbol = 3;
+  int64 since = 4;
+  int32 limit = 5;
+  Params params = 6;
+}
+
+message BalanceRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  Params params = 3;
+}
+
+message FetchOrderRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  string id = 3;
+  string symbol = 4;
+  Params params = 5;
+}
+
+message FetchOrdersRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  string symbol = 3;
+  int64 since = 4;
+  int32 limit = 5;
+  Params params = 6;
+}
+
+message CreateOrderRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  string symbol = 3;
+  string type = 4;   // "limit","market",...
+  string side = 5;   // "buy","sell"
+  double amount = 6;
+  double price = 7;  // optional when market
+  Params params = 8;
+}
+
+message CancelOrderRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  string id = 3;
+  string symbol = 4;
+  Params params = 5;
+}
+
+message WithdrawRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  string code = 3;      // currency code, e.g. "USDT"
+  double amount = 4;
+  string address = 5;
+  string tag = 6;       // memo/payment id
+  Params params = 7;
+}
+
+message DepositRequest {
+  ExchangeConfig config = 1;
+  Credentials credentials = 2;
+  string code = 3;      // currency code
+  double amount = 4;
+  string address = 5;
+  string tag = 6;
+  Params params = 7;
+}
+
+service CcxtService {
+  rpc loadMarkets(LoadMarketsRequest) returns (GenericResponse);
+  rpc fetchMarkets(BaseRequest) returns (GenericResponse);
+  rpc fetchCurrencies(BaseRequest) returns (GenericResponse);
+  rpc fetchTicker(SymbolRequest) returns (GenericResponse);
+  rpc fetchTickers(SymbolsRequest) returns (GenericResponse);
+  rpc fetchOrderBook(OrderBookRequest) returns (GenericResponse);
+  rpc fetchOHLCV(OHLCVRequest) returns (FetchOHLCVResponse);
+  rpc fetchStatus(BaseRequest) returns (GenericResponse);
+  rpc fetchTrades(TradesRequest) returns (GenericResponse);
+  rpc fetchBalance(BalanceRequest) returns (GenericResponse);
+  rpc fetchOrder(FetchOrderRequest) returns (GenericResponse);
+  rpc fetchOrders(FetchOrdersRequest) returns (GenericResponse);
+  rpc fetchOpenOrders(FetchOrdersRequest) returns (GenericResponse);
+  rpc fetchClosedOrders(FetchOrdersRequest) returns (GenericResponse);
+  rpc fetchMyTrades(FetchOrdersRequest) returns (GenericResponse);
+  rpc createOrder(CreateOrderRequest) returns (GenericResponse);
+  rpc cancelOrder(CancelOrderRequest) returns (GenericResponse);
+  rpc deposit(DepositRequest) returns (GenericResponse);
+  rpc withdraw(WithdrawRequest) returns (GenericResponse);
+}
