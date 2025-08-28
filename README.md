@@ -27,116 +27,116 @@ Status codes:
 ### loadMarkets(LoadMarketsRequest) -> GenericResponse
 **Params:** `reload?: bool`, `params?: object`  
 **Mock output:**
-`` { "data": { "loaded": true } } ``
+``` { "data": { "loaded": true } } ```
 
 ### fetchMarkets(BaseRequest) -> GenericResponse
 **Params:** `params?: object`  
 **Mock output:**
-`` { "data": [ { "symbol": "BTC/USDT" } ] } ``
+``` { "data": [ { "symbol": "BTC/USDT" } ] } ```
 
 ### fetchCurrencies(BaseRequest) -> GenericResponse
 **Mock output:**
-`` { "data": { "BTC": {}, "USDT": {} } } ``
+``` { "data": { "BTC": {}, "USDT": {} } } ```
 
 ### fetchTicker(SymbolRequest) -> GenericResponse
 **Params:** `symbol: string`, `params?: object`  
 **Mock output:**
-`` { "data": { "symbol": "BTC/USDT", "last": 65000 } } ``
+``` { "data": { "symbol": "BTC/USDT", "last": 65000 } } ```
 
 ### fetchTickers(SymbolsRequest) -> GenericResponse
 **Params:** `symbols?: string[]`, `params?: object`  
 **Mock output:**
-`` { "data": { "BTC/USDT": {"last": 65000}, "ETH/USDT": {"last": 3000} } } ``
+``` { "data": { "BTC/USDT": {"last": 65000}, "ETH/USDT": {"last": 3000} } } ```
 
 ### fetchOrderBook(OrderBookRequest) -> GenericResponse
 **Params:** `symbol: string`, `limit?: number`, `params?: object`  
 **Mock output:**
-`` { "data": { "bids": [[65000, 1]], "asks": [[65100, 2]] } } ``
+``` { "data": { "bids": [[65000, 1]], "asks": [[65100, 2]] } } ```
 
 ### fetchOHLCV(OHLCVRequest) -> FetchOHLCVResponse
 **Params:** `symbol: string`, `timeframe?: string`, `since?: number`, `limit?: number`, `params?: object`  
 **Mock output:**
-`` { "candles": [ { "timestamp": 1710000000000, "open": 60000, "high": 66000, "low": 59000, "close": 65000, "volume": 120 } ] } ``
+``` { "candles": [ { "timestamp": 1710000000000, "open": 60000, "high": 66000, "low": 59000, "close": 65000, "volume": 120 } ] } ```
 
 ### fetchStatus(BaseRequest) -> GenericResponse
 **Note:** Not all exchanges support this.  
 **Mock output:**
-`` { "data": { "status": "ok" } } ``
+``` { "data": { "status": "ok" } } ```
 
 ### fetchTrades(TradesRequest) -> GenericResponse
 **Params:** `symbol: string`, `since?: number`, `limit?: number`, `params?: object`  
 **Mock output:**
-`` { "data": [ { "id": "t1", "price": 65000, "amount": 0.01 } ] } ``
+``` { "data": [ { "id": "t1", "price": 65000, "amount": 0.01 } ] } ```
 
 ### fetchBalance(BalanceRequest) -> GenericResponse
 **Mock output:**
-`` { "data": { "total": { "USDT": 1000 } } } ``
+``` { "data": { "total": { "USDT": 1000 } } } ```
 
 ### fetchOrder(FetchOrderRequest) -> GenericResponse
 **Params:** `id: string`, `symbol?: string`, `params?: object`  
 **Mock output:**
-`` { "data": { "id": "o1", "status": "open" } } ``
+``` { "data": { "id": "o1", "status": "open" } } ```
 
 ### fetchOrders(FetchOrdersRequest) -> GenericResponse
 **Params:** `symbol?: string`, `since?: number`, `limit?: number`, `params?: object`  
 **Mock output:**
-`` { "data": [ { "id": "o1" }, { "id": "o2" } ] } ``
+``` { "data": [ { "id": "o1" }, { "id": "o2" } ] } ```
 
 ### fetchOpenOrders(FetchOrdersRequest) -> GenericResponse
 **Mock output:**
-`` { "data": [ { "id": "o1", "status": "open" } ] } ``
+``` { "data": [ { "id": "o1", "status": "open" } ] } ```
 
 ### fetchClosedOrders(FetchOrdersRequest) -> GenericResponse
 **Mock output:**
-`` { "data": [ { "id": "o3", "status": "closed" } ] } ``
+``` { "data": [ { "id": "o3", "status": "closed" } ] } ```
 
 ### fetchMyTrades(FetchOrdersRequest) -> GenericResponse
 **Mock output:**
-`` { "data": [ { "id": "mt1", "symbol": "BTC/USDT" } ] } ``
+``` { "data": [ { "id": "mt1", "symbol": "BTC/USDT" } ] } ```
 
 ### createOrder(CreateOrderRequest) -> GenericResponse
 **Params:** `symbol: string`, `type: string`, `side: string`, `amount: number`, `price?: number`, `params?: object`  
 **Mock output:**
-`` { "data": { "id": "newOrder" } } ``
+``` { "data": { "id": "newOrder" } } ```
 
 ### cancelOrder(CancelOrderRequest) -> GenericResponse
 **Params:** `id: string`, `symbol?: string`, `params?: object`  
 **Mock output:**
-`` { "data": { "id": "o1", "status": "canceled" } } ``
+``` { "data": { "id": "o1", "status": "canceled" } } ```
 
 ### deposit(DepositRequest) -> GenericResponse
 **Params:** `code: string`, `amount: number`, `address: string`, `tag?: string`, `params?: object`  
 **Note:** Many exchanges do not implement `deposit`; expect `UNIMPLEMENTED (12)` in such cases.  
 **Mock output (if supported):**
-`` { "data": { "id": "d1", "status": "ok" } } ``
+``` { "data": { "id": "d1", "status": "ok" } } ```
 
 ### withdraw(WithdrawRequest) -> GenericResponse
 **Params:** `code: string`, `amount: number`, `address: string`, `tag?: string`, `params?: object`  
 **Mock output:**
-`` { "data": { "id": "w1", "status": "ok" } } ``
+``` { "data": { "id": "w1", "status": "ok" } } ```
 
 ## Build and Test
 
 ### Local (Node)
 1. Install deps:
-`` npm install ``
+``` npm install ```
 2. Build:
-`` npm run build ``
+``` npm run build ```
 3. Start server (default port 50051):
-`` npm start ``
+``` npm start ```
 4. Run unit tests:
-`` npm test ``
+``` npm test ```
 
 ### Docker
 1. Build image:
-`` docker build -t ccxt-micro:latest . ``
+``` docker build -t ccxt-micro:latest . ```
 2. Run container:
-`` docker run --rm -p 50051:50051 --name ccxt-micro ccxt-micro:latest ``
+``` docker run --rm -p 50051:50051 --name ccxt-micro ccxt-micro:latest ```
 3. (Optional) Environment port override:
-`` docker run --rm -e PORT=6000 -p 6000:6000 ccxt-micro:latest ``
+``` docker run --rm -e PORT=6000 -p 6000:6000 ccxt-micro:latest ```
 
 ### gRPC Usage Example (Node client sketch)
-``js
+```js
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const def = protoLoader.loadSync('proto/ccxt.proto', { longs: String, defaults: true });
@@ -151,4 +151,4 @@ client.fetchTicker({
   if (err) return console.error(err);
   console.log(res.data);
 });
-``
+```
