@@ -117,6 +117,13 @@ Status codes:
 
 ## Build and Test
 
+### Prerequisites
+To install all necessary packages to develop and test locally, run the bootstrap script from the project root dir:
+
+`./bootstrap`
+
+Note: The script assumes you are running a Debian based OS with `apt` package manager. You may need to install docker diferently for your OS.
+
 ### Local (Node / Yarn)
 1. Install deps:
 
