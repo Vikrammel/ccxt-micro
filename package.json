@@ -16,7 +16,8 @@
     "@grpc/grpc-js": "^1.11.2",
     "@grpc/proto-loader": "^0.7.13",
     "ccxt": "^4.3.88",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "stable": "^0.1.8"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
