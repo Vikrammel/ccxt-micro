@@ -9,7 +9,7 @@ export function createExchange(config: ExchangeConfig, credentials?: Credentials
   }
   const options: Params = {
     enableRateLimit: enable_rate_limit,
-    options: {}
+    options: {},
   };
 
   if (default_type) {

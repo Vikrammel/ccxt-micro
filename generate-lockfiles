@@ -1,7 +1,0 @@
-#!/bin/bash
-
-# NOTE: use `npm install <dep>` to add dependencies to the project,
-# then run ./generate-lockfiles to keep package-lock.json and yarn.lock in sync
-
-npm install
-yarn import

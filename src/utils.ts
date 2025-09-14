@@ -14,10 +14,12 @@ export function mapCcxtErrorToGrpc(err: any): { code: number; message: string } 
   if (name.includes('Authentication')) return { code: status.UNAUTHENTICATED, message };
   if (name.includes('Permission')) return { code: status.PERMISSION_DENIED, message };
   if (name.includes('Invalid')) return { code: status.INVALID_ARGUMENT, message };
-  if (name.includes('NotSupported') || name.includes('NotImplemented')) return { code: status.UNIMPLEMENTED, message };
+  if (name.includes('NotSupported') || name.includes('NotImplemented'))
+    return { code: status.UNIMPLEMENTED, message };
   if (name.includes('OrderNotFound')) return { code: status.NOT_FOUND, message };
   if (name.includes('InsufficientFunds')) return { code: status.FAILED_PRECONDITION, message };
-  if (name.includes('DDoS') || name.includes('Network') || name.includes('RequestTimeout')) return { code: status.UNAVAILABLE, message };
+  if (name.includes('DDoS') || name.includes('Network') || name.includes('RequestTimeout'))
+    return { code: status.UNAVAILABLE, message };
 
   // Fallback
   return { code: status.UNKNOWN, message };

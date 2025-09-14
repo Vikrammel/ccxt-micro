@@ -10,7 +10,11 @@
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "test": "jest --runInBand",
-    "lint": "echo \"(add your linter here)\""
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "fmt": "prettier --write .",
+    "fmt:check": "prettier --check .",
+    "presubmit": "yarn && yarn fmt && yarn lint:fix && yarn test"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.11.2",
@@ -26,11 +30,13 @@
     "@types/jest": "^29.5.12",
     "@types/node": "^20.14.10",
     "eslint": "^9.35.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "globals": "^16.4.0",
     "jest": "^29.7.0",
     "jiti": "^2.5.1",
+    "prettier": "^3.6.2",
     "prettier-eslint": "^16.4.2",
-    "prettier-eslint-cli": "^8.0.1",
     "ts-jest": "^29.1.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.4",

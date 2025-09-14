@@ -25,17 +25,52 @@ export interface ExchangeLike {
   fetchTicker: (symbol: string, params?: Params) => Promise<any>;
   fetchTickers: (symbols?: string[], params?: Params) => Promise<any>;
   fetchOrderBook: (symbol: string, limit?: number, params?: Params) => Promise<any>;
-  fetchOHLCV: (symbol: string, timeframe?: string, since?: number | undefined, limit?: number | undefined, params?: Params) => Promise<number[][]>;
+  fetchOHLCV: (
+    symbol: string,
+    timeframe?: string,
+    since?: number,
+    limit?: number,
+    params?: Params,
+  ) => Promise<number[][]>;
   fetchStatus?: (params?: Params) => Promise<any>;
-  fetchTrades: (symbol: string, since?: number | undefined, limit?: number | undefined, params?: Params) => Promise<any>;
+  fetchTrades: (symbol: string, since?: number, limit?: number, params?: Params) => Promise<any>;
   fetchBalance: (params?: Params) => Promise<any>;
   fetchOrder: (id: string, symbol?: string, params?: Params) => Promise<any>;
-  fetchOrders: (symbol?: string, since?: number | undefined, limit?: number | undefined, params?: Params) => Promise<any>;
-  fetchOpenOrders: (symbol?: string, since?: number | undefined, limit?: number | undefined, params?: Params) => Promise<any>;
-  fetchClosedOrders: (symbol?: string, since?: number | undefined, limit?: number | undefined, params?: Params) => Promise<any>;
-  fetchMyTrades: (symbol?: string, since?: number | undefined, limit?: number | undefined, params?: Params) => Promise<any>;
-  createOrder: (symbol: string, type: string, side: string, amount: number, price?: number, params?: Params) => Promise<any>;
+  fetchOrders: (symbol?: string, since?: number, limit?: number, params?: Params) => Promise<any>;
+  fetchOpenOrders: (
+    symbol?: string,
+    since?: number,
+    limit?: number,
+    params?: Params,
+  ) => Promise<any>;
+  fetchClosedOrders: (
+    symbol?: string,
+    since?: number,
+    limit?: number,
+    params?: Params,
+  ) => Promise<any>;
+  fetchMyTrades: (symbol?: string, since?: number, limit?: number, params?: Params) => Promise<any>;
+  createOrder: (
+    symbol: string,
+    type: string,
+    side: string,
+    amount: number,
+    price?: number,
+    params?: Params,
+  ) => Promise<any>;
   cancelOrder: (id: string, symbol?: string, params?: Params) => Promise<any>;
-  deposit?: (code: string, amount: number, address: string, tag?: string, params?: Params) => Promise<any>;
-  withdraw: (code: string, amount: number, address: string, tag?: string, params?: Params) => Promise<any>;
+  deposit?: (
+    code: string,
+    amount: number,
+    address: string,
+    tag?: string,
+    params?: Params,
+  ) => Promise<any>;
+  withdraw: (
+    code: string,
+    amount: number,
+    address: string,
+    tag?: string,
+    params?: Params,
+  ) => Promise<any>;
 }

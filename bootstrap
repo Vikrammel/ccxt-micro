@@ -15,6 +15,9 @@ nvm install node -y
 nvm use node
 npm install -g yarn -y
 
+# install project dependencies
+yarn
+
 # docker
 
 curl -O https://desktop.docker.com/linux/main/amd64/docker-desktop-amd64.deb

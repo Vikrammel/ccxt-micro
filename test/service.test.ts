@@ -9,39 +9,78 @@ import { serviceImpl } from '../src/service';
 jest.mock('../src/exchangeFactory', () => {
   const makeExchange = () => ({
     loadMarkets: jest.fn(async (_reload?: boolean, _p?: any) => ({ loaded: true })),
-    fetchMarkets: jest.fn(async (_p?: any) => ([{ symbol: 'BTC/USDT' }])),
+    fetchMarkets: jest.fn(async (_p?: any) => [{ symbol: 'BTC/USDT' }]),
     fetchCurrencies: jest.fn(async (_p?: any) => ({ BTC: {}, USDT: {} })),
     fetchTicker: jest.fn(async (_s: string, _p?: any) => ({ symbol: 'BTC/USDT', last: 65000 })),
-    fetchTickers: jest.fn(async (_ss?: string[], _p?: any) => ({ 'BTC/USDT': { last: 65000 }, 'ETH/USDT': { last: 3000 } })),
-    fetchOrderBook: jest.fn(async (_s: string, _l?: number, _p?: any) => ({ bids: [[65000, 1]], asks: [[65100, 2]] })),
-    fetchOHLCV: jest.fn(async (_s: string, _tf?: string, _since?: number, _limit?: number, _p?: any) => [
-      [1710000000000, 60000, 66000, 59000, 65000, 120]
-    ]),
+    fetchTickers: jest.fn(async (_ss?: string[], _p?: any) => ({
+      'BTC/USDT': { last: 65000 },
+      'ETH/USDT': { last: 3000 },
+    })),
+    fetchOrderBook: jest.fn(async (_s: string, _l?: number, _p?: any) => ({
+      bids: [[65000, 1]],
+      asks: [[65100, 2]],
+    })),
+    fetchOHLCV: jest.fn(
+      async (_s: string, _tf?: string, _since?: number, _limit?: number, _p?: any) => [
+        [1710000000000, 60000, 66000, 59000, 65000, 120],
+      ],
+    ),
     fetchStatus: jest.fn(async (_p?: any) => ({ status: 'ok' })),
-    fetchTrades: jest.fn(async (_s: string, _since?: number, _limit?: number, _p?: any) => ([
-      { id: 't1', price: 65000, amount: 0.01 }
-    ])),
+    fetchTrades: jest.fn(async (_s: string, _since?: number, _limit?: number, _p?: any) => [
+      { id: 't1', price: 65000, amount: 0.01 },
+    ]),
     fetchBalance: jest.fn(async (_p?: any) => ({ total: { USDT: 1000 } })),
-    fetchOrder: jest.fn(async (_id: string, _sym?: string, _p?: any) => ({ id: 'o1', status: 'open' })),
-    fetchOrders: jest.fn(async (_sym?: string, _since?: number, _limit?: number, _p?: any) => ([{ id: 'o1' }, { id: 'o2' }])),
-    fetchOpenOrders: jest.fn(async (_sym?: string, _since?: number, _limit?: number, _p?: any) => ([{ id: 'o1', status: 'open' }])),
-    fetchClosedOrders: jest.fn(async (_sym?: string, _since?: number, _limit?: number, _p?: any) => ([{ id: 'o3', status: 'closed' }])),
-    fetchMyTrades: jest.fn(async (_sym?: string, _since?: number, _limit?: number, _p?: any) => ([{ id: 'mt1', symbol: 'BTC/USDT' }])),
-    createOrder: jest.fn(async (_sym: string, _type: string, _side: string, _amount: number, _price?: number, _p?: any) => ({ id: 'newOrder' })),
-    cancelOrder: jest.fn(async (_id: string, _sym?: string, _p?: any) => ({ id: 'o1', status: 'canceled' })),
+    fetchOrder: jest.fn(async (_id: string, _sym?: string, _p?: any) => ({
+      id: 'o1',
+      status: 'open',
+    })),
+    fetchOrders: jest.fn(async (_sym?: string, _since?: number, _limit?: number, _p?: any) => [
+      { id: 'o1' },
+      { id: 'o2' },
+    ]),
+    fetchOpenOrders: jest.fn(async (_sym?: string, _since?: number, _limit?: number, _p?: any) => [
+      { id: 'o1', status: 'open' },
+    ]),
+    fetchClosedOrders: jest.fn(
+      async (_sym?: string, _since?: number, _limit?: number, _p?: any) => [
+        { id: 'o3', status: 'closed' },
+      ],
+    ),
+    fetchMyTrades: jest.fn(async (_sym?: string, _since?: number, _limit?: number, _p?: any) => [
+      { id: 'mt1', symbol: 'BTC/USDT' },
+    ]),
+    createOrder: jest.fn(
+      async (
+        _sym: string,
+        _type: string,
+        _side: string,
+        _amount: number,
+        _price?: number,
+        _p?: any,
+      ) => ({ id: 'newOrder' }),
+    ),
+    cancelOrder: jest.fn(async (_id: string, _sym?: string, _p?: any) => ({
+      id: 'o1',
+      status: 'canceled',
+    })),
     // deposit not supported in this mock (to test UNIMPLEMENTED path)
-    withdraw: jest.fn(async (_code: string, _amt: number, _addr: string, _tag?: string, _p?: any) => ({ id: 'w1', status: 'ok' })),
+    withdraw: jest.fn(
+      async (_code: string, _amt: number, _addr: string, _tag?: string, _p?: any) => ({
+        id: 'w1',
+        status: 'ok',
+      }),
+    ),
   });
 
   return {
-    createExchange: jest.fn((_config: any, _creds: any) => makeExchange())
+    createExchange: jest.fn((_config: any, _creds: any) => makeExchange()),
   };
 });
 
 const base = {
   config: { exchange: 'mockex', enable_rate_limit: true },
   credentials: { api_key: 'k', secret: 's' },
-  params: { value: {} }
+  params: { value: {} },
 };
 
 function fakeCb<T>(resolve: (value: { err: any; res: T }) => void) {
@@ -64,7 +103,9 @@ describe('CcxtServiceImpl', () => {
   });
 
   test('fetchCurrencies', async () => {
-    const { err, res } = await new Promise<any>((r) => serviceImpl.fetchCurrencies({ request: base } as any, fakeCb(r)));
+    const { err, res } = await new Promise<any>((r) =>
+      serviceImpl.fetchCurrencies({ request: base } as any, fakeCb(r)),
+    );
     expect(err).toBeNull();
     expect(res.data).toHaveProperty('BTC');
   });
@@ -91,7 +132,9 @@ describe('CcxtServiceImpl', () => {
   });
 
   test('fetchOHLCV', async () => {
-    const call: any = { request: { ...base, symbol: 'BTC/USDT', timeframe: '1h', since: 0, limit: 1 } };
+    const call: any = {
+      request: { ...base, symbol: 'BTC/USDT', timeframe: '1h', since: 0, limit: 1 },
+    };
     const { err, res } = await new Promise<any>((r) => serviceImpl.fetchOHLCV(call, fakeCb(r)));
     expect(err).toBeNull();
     expect(res.candles[0]).toHaveProperty('timestamp');
@@ -114,7 +157,9 @@ describe('CcxtServiceImpl', () => {
   });
 
   test('fetchBalance', async () => {
-    const { err, res } = await new Promise<any>((r) => serviceImpl.fetchBalance({ request: base } as any, fakeCb(r)));
+    const { err, res } = await new Promise<any>((r) =>
+      serviceImpl.fetchBalance({ request: base } as any, fakeCb(r)),
+    );
     expect(err).toBeNull();
     expect(res.data.total.USDT).toBe(1000);
   });
@@ -135,14 +180,18 @@ describe('CcxtServiceImpl', () => {
 
   test('fetchOpenOrders', async () => {
     const call: any = { request: { ...base, symbol: 'BTC/USDT' } };
-    const { err, res } = await new Promise<any>((r) => serviceImpl.fetchOpenOrders(call, fakeCb(r)));
+    const { err, res } = await new Promise<any>((r) =>
+      serviceImpl.fetchOpenOrders(call, fakeCb(r)),
+    );
     expect(err).toBeNull();
     expect(res.data[0].status).toBe('open');
   });
 
   test('fetchClosedOrders', async () => {
     const call: any = { request: { ...base, symbol: 'BTC/USDT' } };
-    const { err, res } = await new Promise<any>((r) => serviceImpl.fetchClosedOrders(call, fakeCb(r)));
+    const { err, res } = await new Promise<any>((r) =>
+      serviceImpl.fetchClosedOrders(call, fakeCb(r)),
+    );
     expect(err).toBeNull();
     expect(res.data[0].status).toBe('closed');
   });
@@ -155,7 +204,9 @@ describe('CcxtServiceImpl', () => {
   });
 
   test('createOrder', async () => {
-    const call: any = { request: { ...base, symbol: 'BTC/USDT', type: 'limit', side: 'buy', amount: 1, price: 1 } };
+    const call: any = {
+      request: { ...base, symbol: 'BTC/USDT', type: 'limit', side: 'buy', amount: 1, price: 1 },
+    };
     const { err, res } = await new Promise<any>((r) => serviceImpl.createOrder(call, fakeCb(r)));
     expect(err).toBeNull();
     expect(res.data.id).toBe('newOrder');
