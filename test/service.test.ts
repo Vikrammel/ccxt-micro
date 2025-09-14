@@ -45,7 +45,7 @@ const base = {
 };
 
 function fakeCb(resolve: (err: any, res: any) => void) {
-  return (err: any, res: any) => resolve({ err, res });
+  return (err: any, res: any) => resolve(err, res);
 }
 
 describe('CcxtServiceImpl', () => {
