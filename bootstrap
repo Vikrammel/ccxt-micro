@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Installs all necessary packages necessary for development and testing
+# NOTE: assumes ubuntu / debian. To install docker, you may need to use a different package manager for your OS.
+
+# node / yarn
+
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+nvm install node -y
+nvm use node
+npm install -g yarn -y
+
+# install project dependencies
+yarn
+
+# docker
+
+curl -O https://desktop.docker.com/linux/main/amd64/docker-desktop-amd64.deb
+sudo apt update
+sudo apt install ./docker-desktop-amd64.deb

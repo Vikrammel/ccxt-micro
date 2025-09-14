@@ -92,7 +92,13 @@ export class CcxtServiceImpl {
     try {
       const { symbol, timeframe, since, limit, params } = call.request;
       const ex = this.getExchange(call as AnyReq);
-      const data = await ex.fetchOHLCV(symbol, timeframe || undefined, since || undefined, limit || undefined, params?.value);
+      const data = await ex.fetchOHLCV(
+        symbol,
+        timeframe || undefined,
+        since || undefined,
+        limit || undefined,
+        params?.value,
+      );
       this.ok(callback, { candles: toOhlcv(data) });
     } catch (err) {
       this.fail(callback, err);
@@ -103,7 +109,13 @@ export class CcxtServiceImpl {
     try {
       const ex = this.getExchange(call as AnyReq);
       if (!ex.fetchStatus) {
-        return callback({ code: status.UNIMPLEMENTED, message: 'fetchStatus not supported by this exchange' } as any, null as any);
+        return callback(
+          {
+            code: status.UNIMPLEMENTED,
+            message: 'fetchStatus not supported by this exchange',
+          } as any,
+          null as any,
+        );
       }
       const data = await ex.fetchStatus(call.request?.params?.value);
       this.ok(callback, { data: asGrpcValue(data) });
@@ -116,7 +128,12 @@ export class CcxtServiceImpl {
     try {
       const { symbol, since, limit, params } = call.request;
       const ex = this.getExchange(call as AnyReq);
-      const data = await ex.fetchTrades(symbol, since || undefined, limit || undefined, params?.value);
+      const data = await ex.fetchTrades(
+        symbol,
+        since || undefined,
+        limit || undefined,
+        params?.value,
+      );
       this.ok(callback, { data: asGrpcValue(data) });
     } catch (err) {
       this.fail(callback, err);
@@ -148,7 +165,12 @@ export class CcxtServiceImpl {
     try {
       const { symbol, since, limit, params } = call.request;
       const ex = this.getExchange(call as AnyReq);
-      const data = await ex.fetchOrders(symbol || undefined, since || undefined, limit || undefined, params?.value);
+      const data = await ex.fetchOrders(
+        symbol || undefined,
+        since || undefined,
+        limit || undefined,
+        params?.value,
+      );
       this.ok(callback, { data: asGrpcValue(data) });
     } catch (err) {
       this.fail(callback, err);
@@ -159,7 +181,12 @@ export class CcxtServiceImpl {
     try {
       const { symbol, since, limit, params } = call.request;
       const ex = this.getExchange(call as AnyReq);
-      const data = await ex.fetchOpenOrders(symbol || undefined, since || undefined, limit || undefined, params?.value);
+      const data = await ex.fetchOpenOrders(
+        symbol || undefined,
+        since || undefined,
+        limit || undefined,
+        params?.value,
+      );
       this.ok(callback, { data: asGrpcValue(data) });
     } catch (err) {
       this.fail(callback, err);
@@ -170,7 +197,12 @@ export class CcxtServiceImpl {
     try {
       const { symbol, since, limit, params } = call.request;
       const ex = this.getExchange(call as AnyReq);
-      const data = await ex.fetchClosedOrders(symbol || undefined, since || undefined, limit || undefined, params?.value);
+      const data = await ex.fetchClosedOrders(
+        symbol || undefined,
+        since || undefined,
+        limit || undefined,
+        params?.value,
+      );
       this.ok(callback, { data: asGrpcValue(data) });
     } catch (err) {
       this.fail(callback, err);
@@ -181,7 +213,12 @@ export class CcxtServiceImpl {
     try {
       const { symbol, since, limit, params } = call.request;
       const ex = this.getExchange(call as AnyReq);
-      const data = await ex.fetchMyTrades(symbol || undefined, since || undefined, limit || undefined, params?.value);
+      const data = await ex.fetchMyTrades(
+        symbol || undefined,
+        since || undefined,
+        limit || undefined,
+        params?.value,
+      );
       this.ok(callback, { data: asGrpcValue(data) });
     } catch (err) {
       this.fail(callback, err);
@@ -192,7 +229,14 @@ export class CcxtServiceImpl {
     try {
       const { symbol, type, side, amount, price, params } = call.request;
       const ex = this.getExchange(call as AnyReq);
-      const data = await ex.createOrder(symbol, type, side, amount, price || undefined, params?.value);
+      const data = await ex.createOrder(
+        symbol,
+        type,
+        side,
+        amount,
+        price || undefined,
+        params?.value,
+      );
       this.ok(callback, { data: asGrpcValue(data) });
     } catch (err) {
       this.fail(callback, err);
@@ -215,7 +259,10 @@ export class CcxtServiceImpl {
       const { code, amount, address, tag, params } = call.request;
       const ex = this.getExchange(call as AnyReq);
       if (!ex.deposit) {
-        return callback({ code: status.UNIMPLEMENTED, message: 'deposit not supported by this exchange' } as any, null as any);
+        return callback(
+          { code: status.UNIMPLEMENTED, message: 'deposit not supported by this exchange' } as any,
+          null as any,
+        );
       }
       const data = await ex.deposit(code, amount, address, tag || undefined, params?.value);
       this.ok(callback, { data: asGrpcValue(data) });
