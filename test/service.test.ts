@@ -44,8 +44,8 @@ const base = {
   params: { value: {} }
 };
 
-function fakeCb(resolve: (err: any, res: any) => void) {
-  return (err: any, res: any) => resolve({ err, res });
+function fakeCb<T>(resolve: (value: { err: any; res: T }) => void) {
+  return (err: any, res: T) => resolve({ err, res });
 }
 
 describe('CcxtServiceImpl', () => {

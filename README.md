@@ -119,16 +119,27 @@ Status codes:
 
 ### Local (Node / Yarn)
 1. Install deps:
+
 ``` npm install ```
-``` yarn install ```
+
+``` yarn ```
+
 2. Build:
+
 ``` npm run build ```
+
 ``` yarn run build ```
+
 3. Start server (default port 50051):
+
 ``` npm start ```
+
 ``` yarn start ```
+
 4. Run unit tests:
+
 ``` npm test ```
+
 ``` yarn test ```
 
 ### Docker
