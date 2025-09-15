@@ -1,10 +1,9 @@
 ---
 name: Feature request
 about: Suggest an idea for this project
-title: "[REQUEST] Request title"
+title: '[REQUEST] Request title'
 labels: enhancement
 assignees: ''
-
 ---
 
 **Is your feature request related to a critical gap/problem or an enhancement? Please describe.**
