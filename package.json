@@ -14,7 +14,9 @@
     "lint:fix": "eslint . --fix",
     "fmt": "prettier --write .",
     "fmt:check": "prettier --check .",
-    "presubmit": "yarn && yarn fmt && yarn lint:fix && yarn test"
+    "presubmit": "yarn && yarn fmt && yarn lint:fix && yarn test",
+    "proto:gen": "protoc --plugin=$(yarn bin)/protoc-gen-ts_proto --ts_proto_out=src/generated --ts_proto_opt=esModuleInterop=true,env=node,outputServices=grpc-js,outputJsonMethods=true -I proto proto/ccxt.proto",
+    "postinstall": "yarn proto:gen"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.11.2",
@@ -39,6 +41,7 @@
     "prettier-eslint": "^16.4.2",
     "ts-jest": "^29.1.2",
     "ts-node-dev": "^2.0.0",
+    "ts-proto": "^2.7.7",
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.43.0"
   }

@@ -1,17 +1,31 @@
-import type { sendUnaryData, ServerUnaryCall } from '@grpc/grpc-js';
-import { status } from '@grpc/grpc-js';
+// src/service.ts
+import type { sendUnaryData, ServerUnaryCall, ServiceError } from '@grpc/grpc-js';
+import { status, Metadata } from '@grpc/grpc-js';
 import { createExchange } from './exchangeFactory';
-import { asGrpcValue, mapCcxtErrorToGrpc, toOhlcv } from './utils';
-import type {
-  Credentials,
-  ExchangeConfig,
-  ExchangeLike,
-  JsonValue,
-  OhlcvEntry,
-  Params,
-} from './types';
+import { asGrpcValue, mapCcxtErrorToGrpc, toOhlcv, structToParams, jsonToValue } from './utils';
+import type { Credentials, ExchangeConfig } from './types';
 
-/* ------------------------ Request / Response typings ----------------------- */
+import {
+  CcxtServiceServer,
+  GenericResponse,
+  FetchOHLCVResponse,
+  LoadMarketsRequest,
+  SymbolRequest,
+  SymbolsRequest,
+  OrderBookRequest,
+  OHLCVRequest,
+  TradesRequest,
+  BalanceRequest,
+  FetchOrderRequest,
+  FetchOrdersRequest,
+  CreateOrderRequest,
+  CancelOrderRequest,
+  DepositRequest,
+  WithdrawRequest,
+  BaseRequest,
+} from './generated/ccxt';
+
+/* --------------------------------- Helpers -------------------------------- */
 
 class InvalidArgumentsError extends Error {
   constructor(message: string) {
@@ -20,370 +34,349 @@ class InvalidArgumentsError extends Error {
   }
 }
 
-type StructMessage = { value?: Params };
-
-type BaseReq = {
-  config: ExchangeConfig;
-  credentials?: Credentials;
-  params?: StructMessage;
-};
-
-type LoadMarketsRequest = BaseReq & { reload?: boolean };
-
-type SymbolRequest = BaseReq & { symbol: string };
-type SymbolsRequest = BaseReq & { symbols?: string[] };
-
-type OrderBookRequest = BaseReq & { symbol: string; limit?: number };
-
-type OHLCVRequest = BaseReq & {
-  symbol: string;
-  timeframe?: string;
-  since?: number;
-  limit?: number;
-};
-
-type TradesRequest = BaseReq & {
-  symbol: string;
-  since?: number;
-  limit?: number;
-};
-
-type FetchOrderRequest = BaseReq & { id: string; symbol?: string };
-type FetchOrdersRequest = BaseReq & { symbol?: string; since?: number; limit?: number };
-
-type CreateOrderRequest = BaseReq & {
-  symbol: string;
-  type: string;
-  side: string;
-  amount: number;
-  price?: number;
-};
-
-type CancelOrderRequest = BaseReq & { id: string; symbol?: string };
-
-type TransferRequest = BaseReq & {
-  code: string;
-  amount: number;
-  address: string;
-  tag?: string;
-};
-
-type GenericResponse = { data: JsonValue };
-type FetchOHLCVResponse = { candles: OhlcvEntry[] };
-
-/* --------------------------------- Helpers -------------------------------- */
-
-function paramsOf(req: { params?: StructMessage }): Params | undefined {
-  return req.params?.value;
+function toServiceError(err: unknown): ServiceError {
+  const { code, message } = mapCcxtErrorToGrpc(err);
+  return {
+    name: 'ServiceError',
+    message,
+    code: code as status,
+    details: message,
+    metadata: new Metadata(),
+  };
 }
 
-function ensureExchange<R extends BaseReq>(call: ServerUnaryCall<R, unknown>): ExchangeLike {
-  const { config, credentials } = call.request;
-  if (!config?.exchange) {
+function ensureExchange<RequestT extends { config?: unknown; credentials?: unknown }>(
+  call: ServerUnaryCall<RequestT, unknown>,
+) {
+  const cfg = call.request.config as ExchangeConfig | undefined;
+  const creds = call.request.credentials as Credentials | undefined;
+  if (!cfg?.exchange) {
     throw new InvalidArgumentsError('config.exchange is required');
   }
-  return createExchange(config, credentials);
-}
-
-function ok<T>(cb: sendUnaryData<T>, payload: T) {
-  cb(null, payload);
-}
-
-function fail<T>(cb: sendUnaryData<T>, err: unknown) {
-  const mapped = mapCcxtErrorToGrpc(err);
-  cb({ code: mapped.code, message: mapped.message } as never, null as never);
+  return createExchange(cfg, creds);
 }
 
 /* --------------------------------- Service -------------------------------- */
 
-export class CcxtServiceImpl {
-  loadMarkets = async (
+export const serviceImpl: CcxtServiceServer = {
+  loadMarkets(
     call: ServerUnaryCall<LoadMarketsRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
-      const data = await ex.loadMarkets(Boolean(call.request.reload), paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      const params = structToParams(call.request.params?.value);
+      ex.loadMarkets(Boolean(call.request.reload), params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchMarkets = async (
-    call: ServerUnaryCall<BaseReq, GenericResponse>,
+  fetchMarkets(
+    call: ServerUnaryCall<BaseRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
-      const data = await ex.fetchMarkets(paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      const params = structToParams(call.request.params?.value);
+      ex.fetchMarkets(params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchCurrencies = async (
-    call: ServerUnaryCall<BaseReq, GenericResponse>,
+  fetchCurrencies(
+    call: ServerUnaryCall<BaseRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
-      const data = await ex.fetchCurrencies(paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      const params = structToParams(call.request.params?.value);
+      ex.fetchCurrencies(params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchTicker = async (
+  fetchTicker(
     call: ServerUnaryCall<SymbolRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
-      const data = await ex.fetchTicker(call.request.symbol, paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      const params = structToParams(call.request.params?.value);
+      ex.fetchTicker(call.request.symbol, params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchTickers = async (
+  fetchTickers(
     call: ServerUnaryCall<SymbolsRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
-      const syms =
-        call.request.symbols && call.request.symbols.length ? call.request.symbols : undefined;
-      const data = await ex.fetchTickers(syms, paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      const params = structToParams(call.request.params?.value);
+      const syms = call.request.symbols?.length ? call.request.symbols : undefined;
+      ex.fetchTickers(syms, params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchOrderBook = async (
+  fetchOrderBook(
     call: ServerUnaryCall<OrderBookRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
-      const data = await ex.fetchOrderBook(
-        call.request.symbol,
-        call.request.limit,
-        paramsOf(call.request),
-      );
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      const params = structToParams(call.request.params?.value);
+      ex.fetchOrderBook(call.request.symbol, call.request.limit, params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchOHLCV = async (
+  fetchOhlcv(
     call: ServerUnaryCall<OHLCVRequest, FetchOHLCVResponse>,
     cb: sendUnaryData<FetchOHLCVResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
+      const params = structToParams(call.request.params?.value);
       const { symbol, timeframe, since, limit } = call.request;
-      const rows = await ex.fetchOHLCV(symbol, timeframe, since, limit, paramsOf(call.request));
-      ok(cb, { candles: toOhlcv(rows) });
-    } catch (err) {
-      fail(cb, err);
+      ex.fetchOhlcv(symbol, timeframe, since, limit, params)
+        .then((rows) => cb(null, { candles: toOhlcv(rows) }))
+        .catch((e: unknown) => cb(toServiceError(e), null as unknown as FetchOHLCVResponse));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchStatus = async (
-    call: ServerUnaryCall<BaseReq, GenericResponse>,
+  fetchStatus(
+    call: ServerUnaryCall<BaseRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
       if (!ex.fetchStatus) {
-        return cb(
+        cb(
           {
-            code: status.UNIMPLEMENTED,
+            name: 'ServiceError',
             message: 'fetchStatus not supported by this exchange',
-          } as never,
-          null as never,
+            code: status.UNIMPLEMENTED,
+            metadata: new Metadata(),
+            details: 'fetchStatus not supported by this exchange',
+          },
+          null,
         );
+        return;
       }
-      const data = await ex.fetchStatus(paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      const params = structToParams(call.request.params?.value);
+      ex.fetchStatus(params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchTrades = async (
+  fetchTrades(
     call: ServerUnaryCall<TradesRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
+      const params = structToParams(call.request.params?.value);
       const { symbol, since, limit } = call.request;
-      const data = await ex.fetchTrades(symbol, since, limit, paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      ex.fetchTrades(symbol, since, limit, params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchBalance = async (
-    call: ServerUnaryCall<BaseReq, GenericResponse>,
+  fetchBalance(
+    call: ServerUnaryCall<BalanceRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
-      const data = await ex.fetchBalance(paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      const params = structToParams(call.request.params?.value);
+      ex.fetchBalance(params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchOrder = async (
+  fetchOrder(
     call: ServerUnaryCall<FetchOrderRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
-      const data = await ex.fetchOrder(
-        call.request.id,
-        call.request.symbol,
-        paramsOf(call.request),
-      );
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      const params = structToParams(call.request.params?.value);
+      ex.fetchOrder(call.request.id, call.request.symbol, params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchOrders = async (
+  fetchOrders(
     call: ServerUnaryCall<FetchOrdersRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
+      const params = structToParams(call.request.params?.value);
       const { symbol, since, limit } = call.request;
-      const data = await ex.fetchOrders(symbol, since, limit, paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      ex.fetchOrders(symbol, since, limit, params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchOpenOrders = async (
+  fetchOpenOrders(
     call: ServerUnaryCall<FetchOrdersRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
+      const params = structToParams(call.request.params?.value);
       const { symbol, since, limit } = call.request;
-      const data = await ex.fetchOpenOrders(symbol, since, limit, paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      ex.fetchOpenOrders(symbol, since, limit, params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchClosedOrders = async (
+  fetchClosedOrders(
     call: ServerUnaryCall<FetchOrdersRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
+      const params = structToParams(call.request.params?.value);
       const { symbol, since, limit } = call.request;
-      const data = await ex.fetchClosedOrders(symbol, since, limit, paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      ex.fetchClosedOrders(symbol, since, limit, params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  fetchMyTrades = async (
+  fetchMyTrades(
     call: ServerUnaryCall<FetchOrdersRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
+      const params = structToParams(call.request.params?.value);
       const { symbol, since, limit } = call.request;
-      const data = await ex.fetchMyTrades(symbol, since, limit, paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      ex.fetchMyTrades(symbol, since, limit, params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  createOrder = async (
+  createOrder(
     call: ServerUnaryCall<CreateOrderRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
+      const params = structToParams(call.request.params?.value);
       const { symbol, type, side, amount, price } = call.request;
-      const data = await ex.createOrder(symbol, type, side, amount, price, paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      ex.createOrder(symbol, type, side, amount, price, params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  cancelOrder = async (
+  cancelOrder(
     call: ServerUnaryCall<CancelOrderRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
-      const data = await ex.cancelOrder(
-        call.request.id,
-        call.request.symbol,
-        paramsOf(call.request),
-      );
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      const params = structToParams(call.request.params?.value);
+      ex.cancelOrder(call.request.id, call.request.symbol, params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  deposit = async (
-    call: ServerUnaryCall<TransferRequest, GenericResponse>,
+  deposit(
+    call: ServerUnaryCall<DepositRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
       if (!ex.deposit) {
-        return cb(
+        cb(
           {
-            code: status.UNIMPLEMENTED,
+            name: 'ServiceError',
             message: 'deposit not supported by this exchange',
-          } as never,
-          null as never,
+            code: status.UNIMPLEMENTED,
+            metadata: new Metadata(),
+            details: 'deposit not supported by this exchange',
+          },
+          null,
         );
+        return;
       }
+      const params = structToParams(call.request.params?.value);
       const { code, amount, address, tag } = call.request;
-      const data = await ex.deposit(code, amount, address, tag, paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      ex.deposit(code, amount, address, tag, params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
+  },
 
-  withdraw = async (
-    call: ServerUnaryCall<TransferRequest, GenericResponse>,
+  withdraw(
+    call: ServerUnaryCall<WithdrawRequest, GenericResponse>,
     cb: sendUnaryData<GenericResponse>,
-  ) => {
+  ) {
     try {
       const ex = ensureExchange(call);
+      const params = structToParams(call.request.params?.value);
       const { code, amount, address, tag } = call.request;
-      const data = await ex.withdraw(code, amount, address, tag, paramsOf(call.request));
-      ok(cb, { data: asGrpcValue(data) });
-    } catch (err) {
-      fail(cb, err);
+      ex.withdraw(code, amount, address, tag, params)
+        .then((data) => cb(null, { data: jsonToValue(asGrpcValue(data)) }))
+        .catch((e: unknown) => cb(toServiceError(e), null));
+    } catch (e: unknown) {
+      cb(toServiceError(e), null);
     }
-  };
-}
-
-export const serviceImpl = new CcxtServiceImpl();
+  },
+};

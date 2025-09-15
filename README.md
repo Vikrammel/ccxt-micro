@@ -63,7 +63,7 @@ Status codes:
 **Mock output:**
 `{ "data": { "bids": [[65000, 1]], "asks": [[65100, 2]] } }`
 
-### fetchOHLCV(OHLCVRequest) -> FetchOHLCVResponse
+### fetchOhlcv(OHLCVRequest) -> FetchOHLCVResponse
 
 **Params:** `symbol: string`, `timeframe?: string`, `since?: number`, `limit?: number`, `params?: object`  
 **Mock output:**
