@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Installs all necessary packages necessary for development and testing
-# NOTE: assumes ubuntu / debian. To install docker, you may need to use a different package manager for your OS.
+# NOTE: assumes ubuntu / debian. To install docker and protoc, you may need to use a different package manager for your OS.
 
 # node / yarn
 
@@ -15,11 +15,14 @@ nvm install node -y
 nvm use node
 npm install -g yarn -y
 
-# install project dependencies
+# protobuf compiler
+sudo apt install protobuf-compiler -y
+
+# install project dependencies & generate protobufs (postinstall script)
 yarn
 
 # docker
 
 curl -O https://desktop.docker.com/linux/main/amd64/docker-desktop-amd64.deb
 sudo apt update
-sudo apt install ./docker-desktop-amd64.deb
+sudo apt install ./docker-desktop-amd64.deb -y

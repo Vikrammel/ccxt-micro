@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 
 # Debian install files (from bootstrap script)
 *.deb
+
+# Generated files
+generated/

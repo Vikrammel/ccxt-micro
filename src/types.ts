@@ -56,7 +56,7 @@ export interface ExchangeLike {
   fetchTicker: (symbol: string, params?: Params) => Promise<JsonValue>;
   fetchTickers: (symbols?: readonly string[], params?: Params) => Promise<JsonValue>;
   fetchOrderBook: (symbol: string, limit?: number, params?: Params) => Promise<OrderBook>;
-  fetchOHLCV: (
+  fetchOhlcv: (
     symbol: string,
     timeframe?: string,
     since?: number,
