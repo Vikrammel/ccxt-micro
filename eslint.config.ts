@@ -3,12 +3,13 @@ import tseslint from 'typescript-eslint';
 import prettierConfig from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
 import { defineConfig } from 'eslint/config';
+import type { Linter } from 'eslint';
 
 // Collect ONLY the rules from recommendedTypeChecked (so we can scope them)
-const typeCheckedRules = tseslint.configs.recommendedTypeChecked.reduce<Record<string, any>>(
-  (acc, cfg) => Object.assign(acc, cfg.rules ?? {}),
-  {},
-);
+const typeCheckedRules: Linter.RulesRecord = {};
+for (const cfg of tseslint.configs.recommendedTypeChecked) {
+  if (cfg.rules) Object.assign(typeCheckedRules, cfg.rules);
+}
 
 export default defineConfig([
   // ignore build artifacts
@@ -53,6 +54,23 @@ export default defineConfig([
       '@typescript-eslint/no-explicit-any': 'warn',
       // Run Prettier as an ESLint rule (reports formatting as errors)
       'prettier/prettier': 'error',
+    },
+  },
+
+  // Tests only: allow underscore-prefixed unused args
+  {
+    files: ['test/**/*.ts'],
+    rules: {
+      // keep variable checks, but ignore args/caught errors that start with "_"
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          caughtErrors: 'all',
+          caughtErrorsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
     },
   },
 

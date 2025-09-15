@@ -1,31 +1,58 @@
 import ccxt from 'ccxt';
-import { Credentials, ExchangeConfig, ExchangeLike, Params } from './types';
+import type { Credentials, ExchangeConfig, ExchangeLike, JsonValue } from './types';
+
+// Options object accepted by ccxt exchange constructors (subset + pass-through)
+type CcxtOptions = {
+  enableRateLimit?: boolean;
+  options?: Record<string, JsonValue>;
+  subaccount?: string;
+
+  // common credential fields ccxt recognizes
+  apiKey?: string;
+  secret?: string;
+  password?: string;
+  uid?: string;
+  login?: string;
+  token?: string;
+  twofa?: string;
+
+  // allow extra exchange-specific keys without using `any`
+} & Record<string, JsonValue>;
+
+type CcxtExchangeCtor = new (opts?: CcxtOptions) => ExchangeLike;
+type CcxtRegistry = Record<string, CcxtExchangeCtor>;
 
 export function createExchange(config: ExchangeConfig, credentials?: Credentials): ExchangeLike {
   const { exchange, enable_rate_limit = true, default_type, subaccount } = config;
-  const ctor = (ccxt as any)[exchange];
-  if (!ctor) {
+
+  // Safely index into the ccxt registry
+  const registry = ccxt as unknown as CcxtRegistry;
+  const ctor = registry[exchange];
+  if (typeof ctor !== 'function') {
     throw new Error(`Unsupported exchange: ${exchange}`);
   }
-  const options: Params = {
+
+  const options: CcxtOptions = {
     enableRateLimit: enable_rate_limit,
     options: {},
   };
 
   if (default_type) {
-    options.options.defaultType = default_type;
+    options.options = { ...(options.options ?? {}), defaultType: default_type };
   }
   if (subaccount) {
-    options.subaccount = subaccount; // exchange-specific
-  }
-  if (credentials) {
-    if (credentials.api_key) (options as any).apiKey = credentials.api_key;
-    if (credentials.secret) (options as any).secret = credentials.secret;
-    if (credentials.password) (options as any).password = credentials.password;
-    if (credentials.uid) (options as any).uid = credentials.uid;
-    if (credentials.login) (options as any).login = credentials.login;
-    if (credentials.token) (options as any).token = credentials.token;
+    options.subaccount = subaccount;
   }
 
-  return new ctor(options) as ExchangeLike;
+  if (credentials) {
+    if (credentials.api_key) options.apiKey = credentials.api_key;
+    if (credentials.secret) options.secret = credentials.secret;
+    if (credentials.password) options.password = credentials.password;
+    if (credentials.uid) options.uid = credentials.uid;
+    if (credentials.login) options.login = credentials.login;
+    if (credentials.token) options.token = credentials.token;
+    if (credentials.twofa) options.twofa = credentials.twofa;
+  }
+
+  return new ctor(options);
 }
