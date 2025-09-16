@@ -2,7 +2,7 @@ name: Pull Request Checks
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
     types: [opened, synchronize, reopened]
 
 jobs:
@@ -46,13 +46,8 @@ jobs:
             exit 1
           fi
 
-      - name: Generate protobuf (if configured)
-        run: |
-          if node -e "const s=(require('./package.json').scripts||{}); process.exit(s['proto:gen']?0:1)"; then
-            yarn proto:gen
-          else
-            echo "Skipping proto:gen (no script defined)"
-          fi
+      - name: Generate protobufs
+        run: yarn proto:gen
 
       - name: Check formatting
         run: |
