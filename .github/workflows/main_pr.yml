@@ -1,0 +1,66 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  main_pr:
+    name: Main Pull Request
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Ensure Yarn (classic)
+        run: |
+          if ! command -v yarn >/dev/null 2>&1; then
+            npm i -g yarn@1.22.19
+          fi
+          yarn --version
+
+      - name: Install protoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          protoc --version
+
+      - name: Install dependencies (non-frozen)
+        run: yarn install
+
+      - name: Ensure yarn.lock unchanged
+        run: |
+          if ! git diff --quiet -- yarn.lock; then
+            echo "Changes to yarn lockfile observed when running \`yarn install\`. Run the command locally before committing the changes."
+            git --no-pager diff -- yarn.lock
+            exit 1
+          fi
+
+      - name: Generate protobufs
+        run: yarn proto:gen
+
+      - name: Check formatting
+        run: |
+          yarn fmt
+          if ! git diff --quiet; then
+            echo "Code changes were observed running \`yarn fmt\`. Run the command locally before committing changes."
+            git --no-pager diff
+            exit 1
+          fi
+
+      - name: Lint
+        run: |
+          yarn lint || { echo "Lint errors observed. Run \`yarn lint\` or \`yarn lint:fix\` locally and fix all errors before committing changes."; exit 1; }
+
+      - name: Test
+        run: yarn test
