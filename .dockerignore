@@ -7,3 +7,11 @@ coverage
 .vscode
 test
 *.md
+bootstrap
+
+# lint files
+.prettierignore
+.prettierrc.json
+eslint.config.ts
+jest.config.ts
+tsconfig.eslint.json
