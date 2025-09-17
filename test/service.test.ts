@@ -1,9 +1,8 @@
-// test/service.test.ts
 import { serviceImpl } from '../src/service';
 import type { ExchangeLike, JsonValue, Params, OrderBook, OhlcvTuple } from '../src/types';
 import { isProtoValue } from '../src/utils';
 import type { ServerUnaryCall, sendUnaryData, ServiceError } from '@grpc/grpc-js';
-
+import { status } from '@grpc/grpc-js'; // value import
 import {
   BaseRequest,
   LoadMarketsRequest,
@@ -489,5 +488,93 @@ describe('CcxtServiceImpl', () => {
     expect(err).toBeNull();
     const data = valueTo<IdOnly>((res as GenericResponse).data);
     expect(data.id).toBe('w1');
+  });
+});
+
+describe('CcxtServiceImpl – error handling', () => {
+  test('ensureExchange without config.exchange -> INVALID_ARGUMENT', async () => {
+    const req = BaseRequest.fromPartial({});
+    const { err, res } = await invoke<BaseRequest, GenericResponse>(serviceImpl.fetchMarkets, req);
+    expect(res).toBeNull();
+    expect(err).not.toBeNull();
+    expect((err as ServiceError).code).toBe(status.INVALID_ARGUMENT);
+  });
+
+  test('fetchMarkets rejection -> maps NetworkError to UNAVAILABLE', async () => {
+    (
+      mockExchange.fetchMarkets as jest.MockedFunction<typeof mockExchange.fetchMarkets>
+    ).mockImplementationOnce(() => Promise.reject({ name: 'NetworkError', message: 'down' }));
+
+    const req = BaseRequest.fromPartial({
+      ...base,
+      params: { value: StructMsg.fromJSON({}) },
+    });
+    const { err, res } = await invoke<BaseRequest, GenericResponse>(serviceImpl.fetchMarkets, req);
+
+    expect(res).toBeNull();
+    expect(err).not.toBeNull();
+    expect((err as ServiceError).code).toBe(status.UNAVAILABLE);
+    expect((err as ServiceError).message).toBe('down');
+  });
+
+  test('fetchOhlcv rejection -> UNAVAILABLE and null response', async () => {
+    (
+      mockExchange.fetchOhlcv as jest.MockedFunction<typeof mockExchange.fetchOhlcv>
+    ).mockImplementationOnce(() =>
+      Promise.reject({ name: 'DDoSProtection', message: 'rate limited' }),
+    );
+
+    const req = OHLCVRequest.fromPartial({
+      ...base,
+      symbol: 'BTC/USDT',
+      timeframe: '1h',
+      since: 0,
+      limit: 1,
+      params: { value: StructMsg.fromJSON({}) },
+    });
+    const { err, res } = await invoke<OHLCVRequest, FetchOHLCVResponse>(
+      serviceImpl.fetchOhlcv,
+      req,
+    );
+
+    expect(res).toBeNull();
+    expect(err).not.toBeNull();
+    expect((err as ServiceError).code).toBe(status.UNAVAILABLE);
+  });
+
+  test('withdraw rejection -> AuthenticationError maps to UNAUTHENTICATED', async () => {
+    (
+      mockExchange.withdraw as jest.MockedFunction<typeof mockExchange.withdraw>
+    ).mockImplementationOnce(() =>
+      Promise.reject({ name: 'AuthenticationError', message: 'bad creds' }),
+    );
+
+    const req = WithdrawRequest.fromPartial({
+      ...base,
+      code: 'USDT',
+      amount: 1,
+      address: 'addr',
+    });
+    const { err, res } = await invoke<WithdrawRequest, GenericResponse>(serviceImpl.withdraw, req);
+
+    expect(res).toBeNull();
+    expect(err).not.toBeNull();
+    expect((err as ServiceError).code).toBe(status.UNAUTHENTICATED);
+    expect((err as ServiceError).message).toBe('bad creds');
+  });
+
+  test('fetchStatus rejection -> NotImplemented maps to UNIMPLEMENTED', async () => {
+    // fetchStatus is optional in the interface; assert it exists on our mock
+    expect(mockExchange.fetchStatus).toBeDefined();
+    (
+      mockExchange.fetchStatus! as jest.MockedFunction<NonNullable<typeof mockExchange.fetchStatus>>
+    ).mockImplementationOnce(() => Promise.reject({ name: 'NotImplemented', message: 'nope' }));
+
+    const req = BaseRequest.fromPartial({ ...base });
+    const { err, res } = await invoke<BaseRequest, GenericResponse>(serviceImpl.fetchStatus, req);
+
+    expect(res).toBeNull();
+    expect(err).not.toBeNull();
+    expect((err as ServiceError).code).toBe(status.UNIMPLEMENTED);
   });
 });
