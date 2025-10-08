@@ -64,5 +64,8 @@ jobs:
         run: |
           yarn lint || { echo "Lint errors observed. Run \`yarn lint\` or \`yarn lint:fix\` locally and fix all errors before committing changes."; exit 1; }
 
-      - name: Test
+      - name: Unit Test
         run: yarn test
+
+      - name: Integration Test
+        run: yarn itest:compose
