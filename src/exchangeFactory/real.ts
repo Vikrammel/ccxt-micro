@@ -1,5 +1,5 @@
 import ccxt from 'ccxt';
-import type { Credentials, ExchangeConfig, ExchangeLike, JsonValue } from './types';
+import type { Credentials, ExchangeConfig, ExchangeLike, JsonValue } from '../types';
 
 // Options object accepted by ccxt exchange constructors (subset + pass-through)
 type CcxtOptions = {

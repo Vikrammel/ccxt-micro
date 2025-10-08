@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+  ccxt-micro:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ccxt-micro:itest
+    environment:
+      - NODE_ENV=production
+      - PORT=50051
+      - USE_MOCK_EXCHANGE=true
+    expose:
+      - '50051'
+    ports:
+      - '50051:50051'
+
+  itest:
+    build:
+      context: .
+      dockerfile: integration.Dockerfile
+    image: ccxt-micro-itest:latest
+    depends_on:
+      - ccxt-micro
+    environment:
+      - TARGET=ccxt-micro:50051

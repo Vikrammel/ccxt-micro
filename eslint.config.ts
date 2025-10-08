@@ -59,7 +59,7 @@ export default defineConfig([
 
   // Tests only: allow underscore-prefixed unused args
   {
-    files: ['test/**/*.ts'],
+    files: ['test/**/*.ts', '**/*mock*.ts', '**/*itest*.ts'],
     rules: {
       // keep variable checks, but ignore args/caught errors that start with "_"
       '@typescript-eslint/no-unused-vars': [
